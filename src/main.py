@@ -12,5 +12,5 @@ class BaseModel(Validator):
 
 
 if __name__== "__main__":
-    model = BaseModel(id=1, name="Example", description="This is an example.")
+    model = BaseModel(id="1", name=None, description=123123)
     print(type(model))
