@@ -12,12 +12,34 @@ class TestModel(Validator):
     name: str
     description: Literal["test1", "test2", "test3"]
 
+    def __post_init__(self):
+        super().__init__()
+        super().__post_init__()
+
 
 @dataclasses.dataclass
 class TestModelWithList(Validator):
     id: int
     name: str
     recommendations: list[str]
+
+    def __post_init__(self):
+        super().__init__()
+        super().__post_init__()
+
+
+@dataclasses.dataclass
+class TestInfo:
+    id: int
+    name: str
+
+@dataclasses.dataclass
+class TestModelWithCustomType(Validator):
+    info: TestInfo
+
+    def __post_init__(self):
+        super().__init__()
+        super().__post_init__()
 
 
 def test_dataclass_validator():
@@ -33,6 +55,13 @@ def test_dataclass_validator__invalid_literal():
             "Validation failed for TestModel: \n"
             "description: \n Expected: ('test1', 'test2', 'test3') \n Received: test4\n"
         )
+
+
+def test_dataclass_validator__custom_type():
+    model = TestModelWithCustomType(info=TestInfo(id=2, name="Info"))
+    assert isinstance(model, Validator)
+    assert isinstance(model.info, TestInfo)
+
 
 @pytest.mark.skip(reason="Still implementing the support for parameterised lists")
 def test_dataclass_validator__list():
