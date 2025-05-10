@@ -1,6 +1,8 @@
 import dataclasses
 from typing import Literal
 
+import pytest
+
 from src.validate.dataclass import Validator
 
 
@@ -9,6 +11,13 @@ class TestModel(Validator):
     id: int
     name: str
     description: Literal["test1", "test2", "test3"]
+
+
+@dataclasses.dataclass
+class TestModelWithList(Validator):
+    id: int
+    name: str
+    recommendations: list[str]
 
 
 def test_dataclass_validator():
@@ -24,3 +33,7 @@ def test_dataclass_validator__invalid_literal():
             "Validation failed for TestModel: \n"
             "description: \n Expected: ('test1', 'test2', 'test3') \n Received: test4\n"
         )
+
+@pytest.mark.skip(reason="Still implementing the support for parameterised lists")
+def test_dataclass_validator__list():
+    model = TestModelWithList(id=1, name="Example", recommendations=["test1", "test2"])
