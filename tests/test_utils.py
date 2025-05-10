@@ -1,4 +1,4 @@
-from src.utils import generate_failed_validation_message
+from validate.utils import generate_failed_validation_message
 
 
 def test_generate_failed_validation_message():

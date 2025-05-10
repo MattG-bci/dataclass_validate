@@ -4,7 +4,7 @@ import typing
 from typing import Any, Union
 
 from src.validate._types import SIMPLE_TYPES
-from src.utils import generate_failed_validation_message
+from validate.utils import generate_failed_validation_message
 
 
 # str, int, float, bool, list, dict, set, tuple
