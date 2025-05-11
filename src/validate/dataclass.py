@@ -4,7 +4,7 @@ import typing
 from typing import Any, Union
 
 from src.validate._types import SIMPLE_TYPES
-from validate.utils import generate_failed_validation_message
+from src.validate.utils import generate_failed_validation_message
 
 
 # str, int, float, bool, list, dict, set, tuple
@@ -12,7 +12,6 @@ from validate.utils import generate_failed_validation_message
 # Literal, Optional, Union, Any
 # Custom data types (dataclasses, enums, etc.)
 
-@dataclasses.dataclass
 class BaseValidator(ABC):
     def __init__(self):
         self._SUPPORTED_TYPES = {
@@ -21,7 +20,15 @@ class BaseValidator(ABC):
 
     @staticmethod
     @abstractmethod
-    def _handle_literal_types(self, field: dataclasses.Field, value: Any) -> Union[str, None]:
+    def _handle_literal_types(field: dataclasses.Field, value: Any) -> Union[str, None]:
+        pass
+
+    @abstractmethod
+    def _validate(self) -> None:
+        pass
+
+    @abstractmethod
+    def __post_init__(self):
         pass
 
 
@@ -30,6 +37,10 @@ class Validator(BaseValidator):
         super().__init__()
 
     def __post_init__(self):
+        self._validate()
+
+
+    def _validate(self) -> None:
         failed_validations = []
         for field in dataclasses.fields(self):
             value = getattr(self, field.name)
@@ -65,6 +76,7 @@ class Validator(BaseValidator):
                 type(value)
             )
         return
+
 
     @staticmethod
     def _handle_literal_types(field: dataclasses.Field, value: Any) -> Union[str, None]:
