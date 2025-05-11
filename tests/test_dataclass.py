@@ -12,20 +12,12 @@ class TestModel(Validator):
     name: str
     description: Literal["test1", "test2", "test3"]
 
-    def __post_init__(self):
-        super().__init__()
-        super().__post_init__()
-
 
 @dataclasses.dataclass
 class TestModelWithList(Validator):
     id: int
     name: str
     recommendations: list[str]
-
-    def __post_init__(self):
-        super().__init__()
-        super().__post_init__()
 
 
 @dataclasses.dataclass
@@ -36,10 +28,6 @@ class TestInfo:
 @dataclasses.dataclass
 class TestModelWithCustomType(Validator):
     info: TestInfo
-
-    def __post_init__(self):
-        super().__init__()
-        super().__post_init__()
 
 
 def test_dataclass_validator():

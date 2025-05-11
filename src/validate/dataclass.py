@@ -33,12 +33,9 @@ class BaseValidator(ABC):
 
 
 class Validator(BaseValidator):
-    def __init__(self):
-        super().__init__()
-
     def __post_init__(self):
+        super().__init__()
         self._validate()
-
 
     def _validate(self) -> None:
         failed_validations = []
