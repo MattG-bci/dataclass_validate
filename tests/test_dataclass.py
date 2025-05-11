@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Literal
+from typing import Literal, Optional, Any
 
 import pytest
 
@@ -28,6 +28,19 @@ class TestInfo:
 @dataclasses.dataclass
 class TestModelWithCustomType(Validator):
     info: TestInfo
+
+
+@dataclasses.dataclass
+class TestModelAny(Validator):
+    id: Any
+
+
+
+def test_dataclass_validator__optional():
+    model = TestModelAny(id=2)
+    assert isinstance(model, Validator)
+    assert model.id == 2
+    assert type(model.id) == int
 
 
 def test_dataclass_validator():

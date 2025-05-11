@@ -43,6 +43,9 @@ class Validator(BaseValidator):
             value = getattr(self, field.name)
             field_type = field.type
 
+            if field_type == typing.Any:
+                continue
+
             if field_type in SIMPLE_TYPES:
                 type_handler = self._SUPPORTED_TYPES.get(field_type)
             elif field_type.__class__ in self._SUPPORTED_TYPES:
