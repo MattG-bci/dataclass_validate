@@ -64,6 +64,7 @@ def test_dataclass_validator__custom_type():
     assert isinstance(model.info, TestInfo)
 
 
-@pytest.mark.skip(reason="Still implementing the support for parameterised lists")
 def test_dataclass_validator__list():
     model = TestModelWithList(id=1, name="Example", recommendations=["test1", "test2"])
+    assert isinstance(model, Validator)
+    assert isinstance(model.recommendations, list)
