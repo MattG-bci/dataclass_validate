@@ -1,7 +1,7 @@
 import dataclasses
 from abc import ABC, abstractmethod
 import typing
-from typing import Any, Union
+from typing import Any, Union, Optional
 import collections.abc
 
 from src.validate._types import SIMPLE_TYPES
@@ -38,7 +38,7 @@ class Validator(BaseValidator):
         super().__init__()
         self._validate()
 
-    def _validate_single_object(self, field: dataclasses.Field, value: Any) -> Union[str, None]:
+    def _validate_single_object(self, field: dataclasses.Field, value: Any) -> Optional[str, None]:
         field_type = field.type
 
         if field_type == typing.Any:
@@ -61,7 +61,7 @@ class Validator(BaseValidator):
         return res
 
 
-    def _validate_iterable(self, field: dataclasses.Field, value: Any) -> Union[str, None]:
+    def _validate_iterable(self, field: dataclasses.Field, value: Any) -> Optional[str, None]:
         for item in value:
             sub_field = dataclasses.field()
             sub_field.type = field.type.__args__[0] if hasattr(field.type, "__args__") else field.type
@@ -92,7 +92,7 @@ class Validator(BaseValidator):
 
 
     @staticmethod
-    def _handle_simple_types(field: dataclasses.Field, value: Any) -> Union[str, None]:
+    def _handle_simple_types(field: dataclasses.Field, value: Any) -> Optional[str, None]:
         if not isinstance(value, field.type):
             return generate_failed_validation_message(
                 field.name,
@@ -103,7 +103,7 @@ class Validator(BaseValidator):
 
 
     @staticmethod
-    def _handle_literal_types(field: dataclasses.Field, value: Any) -> Union[str, None]:
+    def _handle_literal_types(field: dataclasses.Field, value: Any) -> Optional[str, None]:
         if value not in field.type.__args__:
             return generate_failed_validation_message(
                     field.name,
