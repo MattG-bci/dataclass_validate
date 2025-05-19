@@ -17,11 +17,16 @@ class BaseValidator(ABC):
     def __init__(self):
         self._SUPPORTED_TYPES = {
             typing._LiteralGenericAlias: self._handle_literal_types,
+            typing.Any: self._handle_any_type,
         } | dict.fromkeys(SIMPLE_TYPES, self._handle_simple_types)
 
     @staticmethod
+    def _handle_any_type(field: dataclasses.Field, value: Any) -> None:
+        return
+
+    @staticmethod
     @abstractmethod
-    def _handle_literal_types(field: dataclasses.Field, value: Any) -> Union[str, None]:
+    def _handle_literal_types(field: dataclasses.Field, value: Any) -> Optional[str]:
         pass
 
     @abstractmethod
@@ -38,21 +43,15 @@ class Validator(BaseValidator):
         super().__init__()
         self._validate()
 
-    def _validate_single_object(self, field: dataclasses.Field, value: Any) -> Optional[str, None]:
+    def _validate_single_object(self, field: dataclasses.Field, value: Any) -> Optional[str]:
         field_type = field.type
-
-        if field_type == typing.Any:
-            return
-
-        if field_type in SIMPLE_TYPES:
-            type_handler = self._SUPPORTED_TYPES.get(field_type)
-        elif field_type.__class__ in self._SUPPORTED_TYPES:
-            type_handler = self._SUPPORTED_TYPES.get(field_type.__class__)
-        # Check if the field type is a custom type
-        elif "__annotations__" in field_type.__dict__:
+        if hasattr(field_type, "__dict__") and "__annotations__" in field_type.__dict__:
             type_handler = self._handle_simple_types
         else:
-            type_handler = None
+            type_handler = self._SUPPORTED_TYPES.get(
+                field_type,
+                self._SUPPORTED_TYPES.get(field_type.__class__)
+            )
 
         if not type_handler:
             raise Exception(f"Type not supported: {field.type}")
@@ -61,7 +60,7 @@ class Validator(BaseValidator):
         return res
 
 
-    def _validate_iterable(self, field: dataclasses.Field, value: Any) -> Optional[str, None]:
+    def _validate_iterable(self, field: dataclasses.Field, value: Any) -> Optional[str]:
         for item in value:
             sub_field = dataclasses.field()
             sub_field.type = field.type.__args__[0] if hasattr(field.type, "__args__") else field.type
@@ -92,7 +91,7 @@ class Validator(BaseValidator):
 
 
     @staticmethod
-    def _handle_simple_types(field: dataclasses.Field, value: Any) -> Optional[str, None]:
+    def _handle_simple_types(field: dataclasses.Field, value: Any) -> Optional[str]:
         if not isinstance(value, field.type):
             return generate_failed_validation_message(
                 field.name,
@@ -103,7 +102,7 @@ class Validator(BaseValidator):
 
 
     @staticmethod
-    def _handle_literal_types(field: dataclasses.Field, value: Any) -> Optional[str, None]:
+    def _handle_literal_types(field: dataclasses.Field, value: Any) -> Optional[str]:
         if value not in field.type.__args__:
             return generate_failed_validation_message(
                     field.name,
