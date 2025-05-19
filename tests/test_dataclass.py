@@ -1,8 +1,5 @@
 import dataclasses
-from typing import Literal, Optional, Any
-
-import pytest
-
+from typing import Literal, Optional, Any, Union
 from src.validate.dataclass import Validator
 
 
@@ -35,18 +32,38 @@ class TestModelAny(Validator):
     id: Any
 
 
-@dataclasses.dataclass()
+@dataclasses.dataclass
 class TestModelWithOptional(Validator):
     id: int
     name: str
-    description: Optional[str]
+    description: Optional[str] = None
+
+
+@dataclasses.dataclass
+class TestModelWithUnion(Validator):
+    example: Union[str, int]
+
+
+
+
+def test_dataclass_validator__union():
+    model = TestModelWithUnion(example="test")
+    assert isinstance(model, Validator)
+    assert model.example == "test"
+    assert type(model.example) == str
+
+    model_with_int = TestModelWithUnion(example=1)
+    assert isinstance(model_with_int, Validator)
+    assert model_with_int.example == 1
+    assert type(model_with_int.example) == int
 
 
 def test_dataclass_validator__optional():
     model = TestModelWithOptional(id=2, name="Example", description="test1")
     assert isinstance(model, Validator)
 
-
+    model_without_description = TestModelWithOptional(id=2, name="Example")
+    assert isinstance(model_without_description, Validator)
 
 
 def test_dataclass_validator__any():

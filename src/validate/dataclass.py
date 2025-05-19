@@ -18,13 +18,13 @@ class BaseValidator(ABC):
         self._SUPPORTED_TYPES = {
             typing._LiteralGenericAlias: self._handle_literal_types,
             typing.Any: self._handle_any_type,
-            typing._UnionGenericAlias: self._handle_optional_type,
+            typing._UnionGenericAlias: self._handle_generic_union_type,
         } | dict.fromkeys(SIMPLE_TYPES, self._handle_simple_types)
 
 
     @staticmethod
     @abstractmethod
-    def _handle_optional_type(field: dataclasses.Field, value: Any) -> Optional[str]:
+    def _handle_generic_union_type(field: dataclasses.Field, value: Any) -> Optional[str]:
         pass
 
     @staticmethod
@@ -55,34 +55,6 @@ class Validator(BaseValidator):
         super().__init__()
         self._validate()
 
-    def _validate_single_object(self, field: dataclasses.Field, value: Any) -> Optional[str]:
-        field_type = field.type
-        if hasattr(field_type, "__dict__") and "__annotations__" in field_type.__dict__:
-            type_handler = self._handle_simple_types
-        else:
-            type_handler = self._SUPPORTED_TYPES.get(
-                field_type,
-                self._SUPPORTED_TYPES.get(field_type.__class__)
-            )
-
-        if not type_handler:
-            raise Exception(f"Type not supported: {field.type}")
-
-        res = type_handler(field, value)
-        return res
-
-
-    def _validate_iterable(self, field: dataclasses.Field, value: Any) -> Optional[str]:
-        for item in value:
-            sub_field = dataclasses.field()
-            sub_field.type = field.type.__args__[0] if hasattr(field.type, "__args__") else field.type
-            sub_field.name = field.name
-            res = self._validate_single_object(sub_field, item)
-            if res:
-                return res
-        return
-
-
     def _validate(self):
         failed_validations = []
         for field in dataclasses.fields(self):
@@ -101,16 +73,42 @@ class Validator(BaseValidator):
         if failed_validations:
             raise TypeError(f"Validation failed for {self.__class__.__name__}: \n" + "".join(failed_validations))
 
-    @staticmethod
-    def _handle_optional_type(field: dataclasses.Field, value: Any) -> Optional[str]:
-        if value:
-            if not isinstance(value, field.type.__args__[0]):
-                return generate_failed_validation_message(
-                    field.name,
-                    field.type.__args__[0],
-                    type(value)
-                )
+    def _validate_single_object(self, field: dataclasses.Field, value: Any) -> Optional[str]:
+        field_type = field.type
+        if hasattr(field_type, "__dict__") and "__annotations__" in field_type.__dict__:
+            type_handler = self._handle_simple_types
+        else:
+            type_handler = self._SUPPORTED_TYPES.get(
+                field_type,
+                self._SUPPORTED_TYPES.get(field_type.__class__)
+            )
+
+        if not type_handler:
+            raise Exception(f"Type not supported: {field.type}")
+
+        res = type_handler(field, value)
+        return res
+
+    def _validate_iterable(self, field: dataclasses.Field, value: Any) -> Optional[str]:
+        for item in value:
+            sub_field = dataclasses.field()
+            sub_field.type = field.type.__args__[0] if hasattr(field.type, "__args__") else field.type
+            sub_field.name = field.name
+            res = self._validate_single_object(sub_field, item)
+            if res:
+                return res
         return
+
+    @staticmethod
+    def _handle_generic_union_type(field: dataclasses.Field, value: Any) -> Optional[str]:
+        for type_in_union in field.type.__args__:
+            if isinstance(value, type_in_union):
+                return
+        return generate_failed_validation_message(
+            field.name,
+            field.type.__args__,
+            type(value)
+        )
 
     @staticmethod
     def _handle_simple_types(field: dataclasses.Field, value: Any) -> Optional[str]:
@@ -121,7 +119,6 @@ class Validator(BaseValidator):
                 type(value)
             )
         return
-
 
     @staticmethod
     def _handle_literal_types(field: dataclasses.Field, value: Any) -> Optional[str]:
