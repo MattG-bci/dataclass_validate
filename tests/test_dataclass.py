@@ -35,8 +35,21 @@ class TestModelAny(Validator):
     id: Any
 
 
+@dataclasses.dataclass()
+class TestModelWithOptional(Validator):
+    id: int
+    name: str
+    description: Optional[str]
+
 
 def test_dataclass_validator__optional():
+    model = TestModelWithOptional(id=2, name="Example", description="test1")
+    assert isinstance(model, Validator)
+
+
+
+
+def test_dataclass_validator__any():
     model = TestModelAny(id=2)
     assert isinstance(model, Validator)
     assert model.id == 2

@@ -18,7 +18,14 @@ class BaseValidator(ABC):
         self._SUPPORTED_TYPES = {
             typing._LiteralGenericAlias: self._handle_literal_types,
             typing.Any: self._handle_any_type,
+            typing._UnionGenericAlias: self._handle_optional_type,
         } | dict.fromkeys(SIMPLE_TYPES, self._handle_simple_types)
+
+
+    @staticmethod
+    @abstractmethod
+    def _handle_optional_type(field: dataclasses.Field, value: Any) -> Optional[str]:
+        pass
 
     @staticmethod
     def _handle_any_type(field: dataclasses.Field, value: Any) -> None:
@@ -27,6 +34,11 @@ class BaseValidator(ABC):
     @staticmethod
     @abstractmethod
     def _handle_literal_types(field: dataclasses.Field, value: Any) -> Optional[str]:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def _handle_simple_types(field: dataclasses.Field, value: Any) -> Optional[str]:
         pass
 
     @abstractmethod
@@ -89,6 +101,16 @@ class Validator(BaseValidator):
         if failed_validations:
             raise TypeError(f"Validation failed for {self.__class__.__name__}: \n" + "".join(failed_validations))
 
+    @staticmethod
+    def _handle_optional_type(field: dataclasses.Field, value: Any) -> Optional[str]:
+        if value:
+            if not isinstance(value, field.type.__args__[0]):
+                return generate_failed_validation_message(
+                    field.name,
+                    field.type.__args__[0],
+                    type(value)
+                )
+        return
 
     @staticmethod
     def _handle_simple_types(field: dataclasses.Field, value: Any) -> Optional[str]:
