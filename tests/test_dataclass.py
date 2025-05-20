@@ -1,5 +1,6 @@
 import dataclasses
-from typing import Literal, Optional, Any, Union
+from typing import Literal, Optional, Any, Union, Tuple, List
+
 from src.validate.dataclass import Validator
 
 
@@ -14,7 +15,7 @@ class TestModel(Validator):
 class TestModelWithList(Validator):
     id: int
     name: str
-    recommendations: list[str]
+    recommendations: List[str]
 
 
 @dataclasses.dataclass
@@ -44,6 +45,21 @@ class TestModelWithUnion(Validator):
     example: Union[str, int]
 
 
+@dataclasses.dataclass
+class TestModelWithTuple(Validator):
+    example: Tuple[str, int]
+
+
+
+
+def test_dataclass_validator__tuple():
+    model = TestModelWithTuple(example=("test", 1))
+    assert isinstance(model, Validator)
+    assert model.example == ("test", 1)
+    assert type(model.example) == tuple
+    assert len(model.example) == 2
+    assert type(model.example[0]) == str
+    assert type(model.example[1]) == int
 
 
 def test_dataclass_validator__union():

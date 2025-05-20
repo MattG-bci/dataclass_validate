@@ -1,7 +1,7 @@
 import dataclasses
 from abc import ABC, abstractmethod
 import typing
-from typing import Any, Union, Optional
+from typing import Any, Optional, Tuple
 import collections.abc
 
 from src.validate._types import SIMPLE_TYPES
@@ -20,6 +20,12 @@ class BaseValidator(ABC):
             typing.Any: self._handle_any_type,
             typing._UnionGenericAlias: self._handle_generic_union_type,
         } | dict.fromkeys(SIMPLE_TYPES, self._handle_simple_types)
+
+        self._ITERABLE_TYPES = {
+            typing.List: self._validate_list,
+            typing.Set: self._validate_list,
+            typing._GenericAlias: self._validate_tuple,
+        }
 
 
     @staticmethod
@@ -42,6 +48,14 @@ class BaseValidator(ABC):
         pass
 
     @abstractmethod
+    def _validate_tuple(self, field: dataclasses.Field, value: Any) -> Optional[str]:
+        pass
+
+    @abstractmethod
+    def _validate_list(self, field: dataclasses.Field, value: Any) -> Optional[str]:
+        pass
+
+    @abstractmethod
     def _validate(self) -> None:
         pass
 
@@ -60,8 +74,9 @@ class Validator(BaseValidator):
         for field in dataclasses.fields(self):
             value = getattr(self, field.name)
 
-            if isinstance(value, collections.abc.Iterable) and not isinstance(value, str):
-                failed_validation = self._validate_iterable(field, value)
+            iterable_type_validator = self._ITERABLE_TYPES.get(field.type, self._ITERABLE_TYPES.get(field.type.__class__))
+            if iterable_type_validator:
+                failed_validation = iterable_type_validator(field, value)
                 if failed_validation:
                     failed_validations.append(failed_validation)
 
@@ -89,10 +104,20 @@ class Validator(BaseValidator):
         res = type_handler(field, value)
         return res
 
-    def _validate_iterable(self, field: dataclasses.Field, value: Any) -> Optional[str]:
+    def _validate_list(self, field: dataclasses.Field, value: Any) -> Optional[str]:
         for item in value:
             sub_field = dataclasses.field()
             sub_field.type = field.type.__args__[0] if hasattr(field.type, "__args__") else field.type
+            sub_field.name = field.name
+            res = self._validate_single_object(sub_field, item)
+            if res:
+                return res
+        return
+
+    def _validate_tuple(self, field: dataclasses.Field, value: Any) -> Optional[str]:
+        for item, target_type in zip(value, field.type.__args__):
+            sub_field = dataclasses.field()
+            sub_field.type = target_type
             sub_field.name = field.name
             res = self._validate_single_object(sub_field, item)
             if res:
