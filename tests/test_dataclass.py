@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Literal, Optional, Any, Union, Tuple, List
+from typing import Literal, Optional, Any, Union, Tuple, List, Dict
 
 from src.validate.dataclass import Validator
 
@@ -50,6 +50,19 @@ class TestModelWithTuple(Validator):
     example: Tuple[str, int]
 
 
+@dataclasses.dataclass
+class TestModelWithDict(Validator):
+    example: Dict[str, int]
+
+
+
+def test_dataclass_validator__dict():
+    model = TestModelWithDict(example={"test": 1})
+    assert isinstance(model, Validator)
+    assert model.example == {"test": 1}
+    assert type(model.example) == dict
+    assert len(model.example) == 1
+    assert type(model.example["test"]) == int
 
 
 def test_dataclass_validator__tuple():

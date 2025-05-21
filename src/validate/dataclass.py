@@ -5,7 +5,7 @@ from typing import Any, Optional, Tuple
 import collections.abc
 
 from src.validate._types import SIMPLE_TYPES
-from src.validate.utils import generate_failed_validation_message
+from src.validate.utils import generate_failed_validation_message, pair_elements
 
 
 # str, int, float, bool, list, dict, set, tuple
@@ -26,7 +26,6 @@ class BaseValidator(ABC):
             typing.Set: self._validate_list,
             typing._GenericAlias: self._validate_tuple,
         }
-
 
     @staticmethod
     @abstractmethod
@@ -115,7 +114,15 @@ class Validator(BaseValidator):
         return
 
     def _validate_tuple(self, field: dataclasses.Field, value: Any) -> Optional[str]:
-        for item, target_type in zip(value, field.type.__args__):
+        if isinstance(value, typing.Dict):
+            value = [(k, v) for k, v in value.items()]
+
+        elif isinstance(value, typing.Tuple):
+            value = [value]
+
+        target_types = field.type.__args__
+        pairs_to_check = pair_elements(value, target_types)
+        for item, target_type in pairs_to_check:
             sub_field = dataclasses.field()
             sub_field.type = target_type
             sub_field.name = field.name
