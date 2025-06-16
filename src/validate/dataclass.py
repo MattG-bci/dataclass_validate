@@ -1,17 +1,11 @@
 import dataclasses
 from abc import ABC, abstractmethod
 import typing
-from typing import Any, Optional, Tuple
-import collections.abc
+from typing import Any, Optional
 
 from src.validate._types import SIMPLE_TYPES
-from src.validate.utils import generate_failed_validation_message, pair_elements
+from src.validate.utils import generate_failed_validation_message, pair_values_with_types
 
-
-# str, int, float, bool, list, dict, set, tuple
-# list[str], dict[str, int], set[int], tuple[float, str]
-# Literal, Optional, Union, Any
-# Custom data types (dataclasses, enums, etc.)
 
 class BaseValidator(ABC):
     def __init__(self):
@@ -121,7 +115,7 @@ class Validator(BaseValidator):
             value = [value]
 
         target_types = field.type.__args__
-        pairs_to_check = pair_elements(value, target_types)
+        pairs_to_check = pair_values_with_types(value, target_types)
         for item, target_type in pairs_to_check:
             sub_field = dataclasses.field()
             sub_field.type = target_type
