@@ -89,7 +89,7 @@ class Validator(BaseValidator):
 
     def _validate_single_object(self, field: dataclasses.Field, value: Any) -> Optional[str]:
         field_type = field.type
-        if hasattr(field_type, "__dict__") and "__annotations__" in field_type.__dict__:
+        if hasattr(field_type, "__annotations__"):
             type_handler = self._handle_simple_types
         else:
             type_handler = self._SUPPORTED_TYPES.get(
