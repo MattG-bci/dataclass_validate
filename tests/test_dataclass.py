@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Literal, Optional, Any, Union, Tuple, List, Dict
+from typing import Literal, Optional, Any, Union, Tuple, List, Dict, Set
 
 from src.validate.dataclass import Validator
 
@@ -18,7 +18,7 @@ class TestModelWithList(Validator):
     recommendations: List[str]
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class TestInfo:
     id: int
     name: str
@@ -54,6 +54,23 @@ class TestModelWithTuple(Validator):
 class TestModelWithDict(Validator):
     example: Dict[str, int]
 
+
+@dataclasses.dataclass
+class TestModelWithCustoms(Validator):
+    list_items: List[TestInfo]
+    set_items: Set[TestInfo]
+
+
+def test_dataclass_validator__list_of_customs():
+    model = TestModelWithCustoms(list_items=[TestInfo(id=1, name="Item1"), TestInfo(id=2, name="Item2")], set_items={TestInfo(id=1, name="Item1"), TestInfo(id=2, name="Item2")})
+    assert isinstance(model, Validator)
+    assert len(model.list_items) == 2
+    assert isinstance(model.list_items[0], TestInfo)
+    assert model.list_items[0].id == 1
+    assert model.list_items[0].name == "Item1"
+    assert isinstance(model.list_items[1], TestInfo)
+    assert model.list_items[1].id == 2
+    assert model.list_items[1].name == "Item2"
 
 
 def test_dataclass_validator__dict():
