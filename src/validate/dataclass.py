@@ -32,7 +32,7 @@ class BaseValidator(ABC):
 
     @staticmethod
     @abstractmethod
-    def _handle_generic_union_type(field: dataclasses.Field, value: Any) -> Optional[str]:
+    def _handle_generic_union_type(field: dataclasses.Field, value: Any) -> Union[str, None]:
         pass
 
     @staticmethod
