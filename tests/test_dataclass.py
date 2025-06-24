@@ -17,6 +17,11 @@ class TestModelWithList(Validator):
     name: str
     recommendations: List[str]
 
+@dataclasses.dataclass
+class TestModelWithListUnion(Validator):
+    id: int
+    name: str
+    recommendations: List[Union[str, int]]
 
 @dataclasses.dataclass(frozen=True)
 class TestInfo:
@@ -144,3 +149,23 @@ def test_dataclass_validator__list():
     model = TestModelWithList(id=1, name="Example", recommendations=["test1", "test2"])
     assert isinstance(model, Validator)
     assert isinstance(model.recommendations, list)
+
+    try:
+        TestModelWithList(id=1, name="Example", recommendations=["test1", 2])
+    except TypeError as e:
+        assert str(e) == (
+            "Validation failed for TestModelWithList: \n"
+            "recommendations: \n Expected: <class 'str'> \n Received: <class 'int'>\n"
+        )
+
+def test_dataclass_validator__list_union():
+    model = TestModelWithListUnion(id=1, name="Example", recommendations=["test1", 2])
+    assert isinstance(model.recommendations, list)
+
+    try:
+        TestModelWithListUnion(id=1, name="Example", recommendations=["test1", 2.5])
+    except TypeError as e:
+        assert str(e) == (
+            "Validation failed for TestModelWithListUnion: \n"
+            "recommendations: \n Expected: (<class 'str'>, <class 'int'>) \n Received: <class 'float'>\n"
+        )
