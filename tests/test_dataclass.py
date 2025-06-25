@@ -3,7 +3,6 @@ from typing import Literal, Optional, Any, Union, Tuple, List, Dict, Set
 
 from src.validate.dataclass import Validator
 
-
 @dataclasses.dataclass
 class TestModel(Validator):
     id: int
@@ -68,60 +67,89 @@ class TestModelWithCustoms(Validator):
 
 def test_dataclass_validator__list_of_customs():
     model = TestModelWithCustoms(list_items=[TestInfo(id=1, name="Item1"), TestInfo(id=2, name="Item2")], set_items={TestInfo(id=1, name="Item1"), TestInfo(id=2, name="Item2")})
-    assert isinstance(model, Validator)
     assert len(model.list_items) == 2
-    assert isinstance(model.list_items[0], TestInfo)
-    assert model.list_items[0].id == 1
-    assert model.list_items[0].name == "Item1"
-    assert isinstance(model.list_items[1], TestInfo)
-    assert model.list_items[1].id == 2
-    assert model.list_items[1].name == "Item2"
+    for item in model.list_items:
+        assert isinstance(item, TestInfo)
+        assert isinstance(item.id, int)
+        assert isinstance(item.name, str)
+
+    try:
+        model_invalid_list = TestModelWithCustoms(list_items=[TestInfo(id=1, name="Item1"), "InvalidItem"], set_items={TestInfo(id=1, name="Item1"), TestInfo(id=2, name="Item2")})
+    except TypeError as e:
+        assert str(e) == (
+            "Validation failed for TestModelWithCustoms: \n"
+            "list_items: \n Expected: <class 'test_dataclass.TestInfo'> \n Received: <class 'str'>\n"
+        )
 
 
 def test_dataclass_validator__dict():
     model = TestModelWithDict(example={"test": 1})
-    assert isinstance(model, Validator)
-    assert model.example == {"test": 1}
     assert type(model.example) == dict
-    assert len(model.example) == 1
     assert type(model.example["test"]) == int
 
+    try:
+        model_invalid_dict = TestModelWithDict(example={"test": "string"})
+    except TypeError as e:
+        assert str(e) == (
+            "Validation failed for TestModelWithDict: \n"
+            "example: \n Expected: <class 'int'> \n Received: <class 'str'>\n"
+        )
 
 def test_dataclass_validator__tuple():
     model = TestModelWithTuple(example=("test", 1))
-    assert isinstance(model, Validator)
-    assert model.example == ("test", 1)
     assert type(model.example) == tuple
-    assert len(model.example) == 2
     assert type(model.example[0]) == str
     assert type(model.example[1]) == int
 
+    try:
+        model_invalid_tuple = TestModelWithTuple(example=("test", 2.5))
+    except TypeError as e:
+        assert str(e) == (
+            "Validation failed for TestModelWithTuple: \n"
+            "example: \n Expected: <class 'int'> \n Received: <class 'float'>\n"
+        )
+
+    try:
+        model_invalid_tuple = TestModelWithTuple(example=("test", "string"))
+    except TypeError as e:
+        assert str(e) == (
+            "Validation failed for TestModelWithTuple: \n"
+            "example: \n Expected: <class 'int'> \n Received: <class 'str'>\n"
+        )
+
 
 def test_dataclass_validator__union():
-    model = TestModelWithUnion(example="test")
-    assert isinstance(model, Validator)
-    assert model.example == "test"
-    assert type(model.example) == str
+    model_with_str = TestModelWithUnion(example="test")
+    assert model_with_str.example == "test"
+    assert type(model_with_str.example) == str
 
     model_with_int = TestModelWithUnion(example=1)
-    assert isinstance(model_with_int, Validator)
     assert model_with_int.example == 1
     assert type(model_with_int.example) == int
 
+    try:
+        model_violating_union = TestModelWithUnion(example=2.5)
+    except TypeError as e:
+        assert str(e) == (
+            "Validation failed for TestModelWithUnion: \n"
+            "example: \n Expected: (<class 'str'>, <class 'int'>) \n Received: <class 'float'>\n"
+        )
 
 def test_dataclass_validator__optional():
     model = TestModelWithOptional(id=2, name="Example", description="test1")
-    assert isinstance(model, Validator)
 
     model_without_description = TestModelWithOptional(id=2, name="Example")
-    assert isinstance(model_without_description, Validator)
+    assert model_without_description.description is None
 
 
 def test_dataclass_validator__any():
-    model = TestModelAny(id=2)
-    assert isinstance(model, Validator)
-    assert model.id == 2
-    assert type(model.id) == int
+    types_to_test = [int, str, float, bool, type(None), dict, list, TestInfo]
+    values_to_test = [1, "test", 3.14, True, None, {"key": "value"}, [1, 2, 3], TestInfo(id=1, name="Info")]
+    for _type, value in zip(types_to_test, values_to_test):
+        model = TestModelAny(id=value)
+        assert model.id == value
+        assert isinstance(model.id, _type)
+
 
 
 def test_dataclass_validator():
@@ -141,13 +169,18 @@ def test_dataclass_validator__invalid_literal():
 
 def test_dataclass_validator__custom_type():
     model = TestModelWithCustomType(info=TestInfo(id=2, name="Info"))
-    assert isinstance(model, Validator)
     assert isinstance(model.info, TestInfo)
 
+    try:
+        model_with_wrong_custom_type = TestModelWithCustomType(info=TestModel(id=1, name="Example", description="test1"))
+    except TypeError as e:
+        assert str(e) == (
+            "Validation failed for TestModelWithCustomType: \n"
+            "info: \n Expected: <class 'test_dataclass.TestInfo'> \n Received: <class 'test_dataclass.TestModel'>\n"
+        )
 
 def test_dataclass_validator__list():
     model = TestModelWithList(id=1, name="Example", recommendations=["test1", "test2"])
-    assert isinstance(model, Validator)
     assert isinstance(model.recommendations, list)
 
     try:
