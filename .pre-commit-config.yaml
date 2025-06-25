@@ -3,6 +3,5 @@ repos:
     rev: v0.4.9
     hooks:
       - id: ruff
-        args: [ --fix ]
-        files: src|tests
-      - id: ruff-format
+        args: [ format ]
+        files: src tests

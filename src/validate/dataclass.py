@@ -3,7 +3,10 @@ from abc import ABC, abstractmethod
 import typing
 from typing import Any, Union
 
-from src.validate.utils import generate_failed_validation_message, pair_values_with_types
+from src.validate.utils import (
+    generate_failed_validation_message,
+    pair_values_with_types,
+)
 
 SIMPLE_TYPES: list[type] = [
     int,
@@ -15,6 +18,7 @@ SIMPLE_TYPES: list[type] = [
     set,
     tuple,
 ]
+
 
 class BaseValidator(ABC):
     def __init__(self):
@@ -32,7 +36,9 @@ class BaseValidator(ABC):
 
     @staticmethod
     @abstractmethod
-    def _handle_generic_union_type(field: dataclasses.Field, value: Any) -> Union[str, None]:
+    def _handle_generic_union_type(
+        field: dataclasses.Field, value: Any
+    ) -> Union[str, None]:
         pass
 
     @staticmethod
@@ -76,7 +82,9 @@ class Validator(BaseValidator):
         for field in dataclasses.fields(self):
             value = getattr(self, field.name)
 
-            iterable_type_validator = self._ITERABLE_TYPES.get(field.type, self._ITERABLE_TYPES.get(field.type.__class__))
+            iterable_type_validator = self._ITERABLE_TYPES.get(
+                field.type, self._ITERABLE_TYPES.get(field.type.__class__)
+            )
             if iterable_type_validator:
                 failed_validation = iterable_type_validator(field, value)
                 if failed_validation:
@@ -88,16 +96,20 @@ class Validator(BaseValidator):
                     failed_validations.append(failed_validation)
 
         if failed_validations:
-            raise TypeError(f"Validation failed for {self.__class__.__name__}: \n" + "".join(failed_validations))
+            raise TypeError(
+                f"Validation failed for {self.__class__.__name__}: \n"
+                + "".join(failed_validations)
+            )
 
-    def _validate_single_object(self, field: dataclasses.Field, value: Any) -> Union[str, None]:
+    def _validate_single_object(
+        self, field: dataclasses.Field, value: Any
+    ) -> Union[str, None]:
         field_type = field.type
         if hasattr(field_type, "__annotations__"):
             type_handler = self._handle_simple_types
         else:
             type_handler = self._SUPPORTED_TYPES.get(
-                field_type,
-                self._SUPPORTED_TYPES.get(field_type.__class__)
+                field_type, self._SUPPORTED_TYPES.get(field_type.__class__)
             )
 
         if not type_handler:
@@ -109,7 +121,11 @@ class Validator(BaseValidator):
     def _validate_list(self, field: dataclasses.Field, value: Any) -> Union[str, None]:
         for item in value:
             sub_field = dataclasses.field()
-            sub_field.type = field.type.__args__[0] if hasattr(field.type, "__args__") else field.type
+            sub_field.type = (
+                field.type.__args__[0]
+                if hasattr(field.type, "__args__")
+                else field.type
+            )
             sub_field.name = field.name
             res = self._validate_single_object(sub_field, item)
             if res:
@@ -135,23 +151,21 @@ class Validator(BaseValidator):
         return
 
     @staticmethod
-    def _handle_generic_union_type(field: dataclasses.Field, value: Any) -> Union[str, None]:
+    def _handle_generic_union_type(
+        field: dataclasses.Field, value: Any
+    ) -> Union[str, None]:
         for type_in_union in field.type.__args__:
             if isinstance(value, type_in_union):
                 return
         return generate_failed_validation_message(
-            field.name,
-            field.type.__args__,
-            type(value)
+            field.name, field.type.__args__, type(value)
         )
 
     @staticmethod
     def _handle_simple_types(field: dataclasses.Field, value: Any) -> Union[str, None]:
         if not isinstance(value, field.type):
             return generate_failed_validation_message(
-                field.name,
-                field.type,
-                type(value)
+                field.name, field.type, type(value)
             )
         return
 
@@ -159,8 +173,6 @@ class Validator(BaseValidator):
     def _handle_literal_types(field: dataclasses.Field, value: Any) -> Union[str, None]:
         if value not in field.type.__args__:
             return generate_failed_validation_message(
-                    field.name,
-                    field.type.__args__,
-                    value
-                )
+                field.name, field.type.__args__, value
+            )
         return
