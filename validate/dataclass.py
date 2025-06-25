@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import typing
 from typing import Any, Union
 
-from src.validate.utils import (
+from validate.utils import (
     generate_failed_validation_message,
     pair_values_with_types,
 )

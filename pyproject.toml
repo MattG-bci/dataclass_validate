@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dataclass-validate"
-packages = [{include = "src"}]
+packages = [{include = "validate"}]
 version = "0.1.0"
 description = ""
 authors = ["MattG-bci"]

@@ -1,5 +1,5 @@
-from src.validate.utils import generate_failed_validation_message
-from src.validate.utils import pair_values_with_types
+from validate.utils import generate_failed_validation_message
+from validate.utils import pair_values_with_types
 
 
 def test_generate_failed_validation_message():
