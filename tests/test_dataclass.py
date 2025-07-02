@@ -1,5 +1,6 @@
 import dataclasses
 from typing import Literal, Optional, Any, Union, Tuple, List, Dict, Set
+from enum import Enum
 
 from validate.dataclass import Validator
 
@@ -67,6 +68,51 @@ class ModelWithDict(Validator):
 class ModelWithCustoms(Validator):
     list_items: List[Info]
     set_items: Set[Info]
+
+
+@dataclasses.dataclass
+class ModelChild(Model):
+    additional_info: str
+
+
+@dataclasses.dataclass
+class ModelWithInheritance(Validator):
+    data: Model
+
+
+class Status(Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    PENDING = "pending"
+
+
+@dataclasses.dataclass
+class ModelEnum(Validator):
+    status: Status
+
+
+def test_dataclass_validator__enum():
+    model = ModelEnum(status=Status.ACTIVE)
+    assert isinstance(model.status, Status)
+    assert model.status == Status.ACTIVE
+
+    try:
+        ModelEnum(status=Status.INACTIVE)
+    except TypeError as e:
+        assert str(e) == (
+            "Validation failed for ModelEnum: \n"
+            "status: \n Expected: <enum 'Status'> \n Received: <class 'str'>\n"
+        )
+
+
+def test_dataclass_validator__inheritance():
+    model = ModelWithInheritance(
+        ModelChild(id=1, name="Example", description="test1", additional_info="extra")
+    )
+    assert isinstance(model.data, ModelChild)
+    assert isinstance(model.data, Model)
+
+    assert ModelWithInheritance(data=Model(id=1, name="Example", description="test1"))
 
 
 def test_dataclass_validator__list_of_customs():

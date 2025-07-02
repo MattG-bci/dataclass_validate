@@ -2,6 +2,7 @@ import dataclasses
 from abc import ABC, abstractmethod
 import typing
 from typing import Any, Union
+from enum import EnumMeta
 
 from validate.utils import (
     generate_failed_validation_message,
@@ -26,6 +27,7 @@ class BaseValidator(ABC):
             typing._LiteralGenericAlias: self._handle_literal_types,
             typing.Any: self._handle_any_type,
             typing._UnionGenericAlias: self._handle_generic_union_type,
+            EnumMeta: self._handle_simple_types,
         } | dict.fromkeys(SIMPLE_TYPES, self._handle_simple_types)
 
         self._ITERABLE_TYPES = {
