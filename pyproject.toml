@@ -7,7 +7,7 @@ authors = ["MattG-bci"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "3.9.6"
+python = "3.12.7"
 pytest = "^8.3.5"
 
 

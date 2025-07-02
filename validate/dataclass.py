@@ -25,7 +25,6 @@ class BaseValidator(ABC):
     def __init__(self):
         self._SUPPORTED_TYPES = {
             typing._LiteralGenericAlias: self._handle_literal_types,
-            typing.Any: self._handle_any_type,
             typing._UnionGenericAlias: self._handle_generic_union_type,
             EnumMeta: self._handle_simple_types,
         } | dict.fromkeys(SIMPLE_TYPES, self._handle_simple_types)
@@ -42,10 +41,6 @@ class BaseValidator(ABC):
         field: dataclasses.Field, value: Any
     ) -> Union[str, None]:
         pass
-
-    @staticmethod
-    def _handle_any_type(field: dataclasses.Field, value: Any) -> None:
-        return
 
     @staticmethod
     @abstractmethod
@@ -107,6 +102,9 @@ class Validator(BaseValidator):
         self, field: dataclasses.Field, value: Any
     ) -> Union[str, None]:
         field_type = field.type
+        if field_type == Any:
+            return
+
         if hasattr(field_type, "__annotations__"):
             type_handler = self._handle_simple_types
         else:
