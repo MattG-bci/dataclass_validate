@@ -1,94 +1,5 @@
-import dataclasses
-from typing import Literal, Optional, Any, Union, Tuple, List, Dict, Set
-from enum import Enum
-
+from conftest import *
 from validate.dataclass import Validator
-
-
-@dataclasses.dataclass
-class Model(Validator):
-    id: int
-    name: str
-    description: Literal["test1", "test2", "test3"]
-
-
-@dataclasses.dataclass
-class ModelWithList(Validator):
-    id: int
-    name: str
-    recommendations: List[str]
-
-
-@dataclasses.dataclass
-class ModelWithListUnion(Validator):
-    id: int
-    name: str
-    recommendations: List[Union[str, int]]
-
-
-@dataclasses.dataclass(frozen=True)
-class Info:
-    id: int
-    name: str
-
-
-@dataclasses.dataclass
-class ModelWithCustomType(Validator):
-    info: Info
-
-
-@dataclasses.dataclass
-class ModelAny(Validator):
-    id: Any
-
-
-@dataclasses.dataclass
-class ModelWithOptional(Validator):
-    id: int
-    name: str
-    description: Optional[str] = None
-
-
-@dataclasses.dataclass
-class ModelWithUnion(Validator):
-    example: Union[str, int]
-
-
-@dataclasses.dataclass
-class ModelWithTuple(Validator):
-    example: Tuple[str, int]
-
-
-@dataclasses.dataclass
-class ModelWithDict(Validator):
-    example: Dict[str, int]
-
-
-@dataclasses.dataclass
-class ModelWithCustoms(Validator):
-    list_items: List[Info]
-    set_items: Set[Info]
-
-
-@dataclasses.dataclass
-class ModelChild(Model):
-    additional_info: str
-
-
-@dataclasses.dataclass
-class ModelWithInheritance(Validator):
-    data: Model
-
-
-class Status(Enum):
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    PENDING = "pending"
-
-
-@dataclasses.dataclass
-class ModelEnum(Validator):
-    status: Status
 
 
 def test_dataclass_validator__enum():
@@ -134,7 +45,7 @@ def test_dataclass_validator__list_of_customs():
     except TypeError as e:
         assert str(e) == (
             "Validation failed for ModelWithCustoms: \n"
-            "list_items: \n Expected: <class 'test_dataclass.Info'> \n Received: <class 'str'>\n"
+            "list_items: \n Expected: <class 'conftest.Info'> \n Received: <class 'str'>\n"
         )
 
 
@@ -245,7 +156,7 @@ def test_dataclass_validator__custom_type():
     except TypeError as e:
         assert str(e) == (
             "Validation failed for ModelWithCustomType: \n"
-            "info: \n Expected: <class 'test_dataclass.Info'> \n Received: <class 'test_dataclass.Model'>\n"
+            "info: \n Expected: <class 'conftest.Info'> \n Received: <class 'conftest.Model'>\n"
         )
 
 
